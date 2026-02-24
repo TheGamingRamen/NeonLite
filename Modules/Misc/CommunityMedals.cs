@@ -595,13 +595,13 @@ namespace NeonLite.Modules
 
             if (!levelData.isSidequest)
             {
-                __instance._medal.sprite = Medals[Math.Min(medalEarned, I(MedalEnum.Sapphire))];
+                __instance._medal.sprite = Medals[Math.Min(medalEarned, I(MedalEnum.Blud))];
                 __instance._medal.gameObject.SetActive(true);
             }
             else if (medalEarned > (int)MedalEnum.Dev)
             {
                 __instance._medal.preserveAspect = true;
-                __instance._medal.sprite = Crystals[Math.Min(medalEarned, I(MedalEnum.Sapphire))];
+                __instance._medal.sprite = Crystals[Math.Min(medalEarned, I(MedalEnum.Blud))];
                 __instance._medal.gameObject.SetActive(true);
             }
         }
