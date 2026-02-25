@@ -89,15 +89,6 @@
     <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
 
 	<ItemGroup>
-		<None Remove="Assets\Sprites\CrystalBlud.png" />
-		<None Remove="Assets\Sprites\CrystalTopaz.png" />
-		<None Remove="Assets\Sprites\MedalBlud.png" />
-		<None Remove="Assets\Sprites\MedalTopaz.png" />
-		<None Remove="Assets\Sprites\MikeyBlud.png" />
-		<None Remove="Assets\Sprites\MikeyTopaz.png" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<EmbeddedResource Include="Assets\Sprites\CrystalBlud.png" />
 		<EmbeddedResource Include="Assets\Sprites\CrystalTopaz.png" />
 		<EmbeddedResource Include="Assets\Sprites\MedalBlud.png" />

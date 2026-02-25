@@ -48,7 +48,7 @@ namespace NeonLite.Modules
             new(0.674f, 0.313f, 0.913f),
             new(0.043f, 0.317f, 0.901f),
             new(0.976f, 0.341f, 0f), // TOPAZ COLOR
-            new(0.733f, 0.039f, 0.118f) // BLOOD DIAMOND COLOR
+            new(1.0f, 0.333f, 0.988f) // BLOOD DIAMOND COLOR
         ];
 
         public enum MedalEnum
@@ -89,6 +89,7 @@ namespace NeonLite.Modules
         internal static MelonPreferences_Entry<bool> oldStyle;
         internal static MelonPreferences_Entry<bool> hideOld;
         internal static MelonPreferences_Entry<bool> hideLeaderboard;
+        internal static MelonPreferences_Entry<bool> leaderboardSaphPlus;
         public static MelonPreferences_Entry<float> hueShift;
         internal static MelonPreferences_Entry<string> overrideURL;
 
@@ -102,6 +103,7 @@ namespace NeonLite.Modules
             oldStyle = Settings.Add(Settings.h, "Medals", "oldStyle", "Stamp Style", "Display the community medals in the level info as it was pre-3.0.0.", false);
             hideOld = Settings.Add(Settings.h, "Medals", "hideOld", "Hide Times", "Hides unachieved medal times.", false);
             hideLeaderboard = Settings.Add(Settings.h, "Medals", "hideLeaderboard", "Hide Leaderboard Medals", "Unachieved medals will appear the same as your own on the leaderboards.", false);
+            leaderboardSaphPlus = Settings.Add(Settings.h, "Medals", "leadeerboardSaphPlus", "Show Saph+ on Leaderboard", "Show medals higher than Sapphire on leaderboards", true);
             overrideURL = Settings.Add(Settings.h, "Medals", "overrideURL", "Extension URL", "Specifies additional community medals JSON URL to apply on top of the existing community medals.", "");
 
             active = setting.SetupForModule(Activate, static (_, after) => after);
@@ -588,6 +590,7 @@ namespace NeonLite.Modules
             Leaderboards leaderboard = __instance.GetComponentInParent<Leaderboards>();
             if (leaderboard == null) return; // somehow??
             LevelData levelData = (LevelData)currentLevelData.GetValue(leaderboard);
+            MedalEnum highestMedalOnLeaderboard = leaderboardSaphPlus.Value ? MedalEnum.Blud : MedalEnum.Sapphire;
             if (levelData == null || !medalTimes.ContainsKey(levelData.levelID)) return;
 
             int medalEarned = GetMedalIndex(levelData.levelID, newData._scoreValueMilliseconds * 1000);
@@ -602,13 +605,13 @@ namespace NeonLite.Modules
 
             if (!levelData.isSidequest)
             {
-                __instance._medal.sprite = Medals[Math.Min(medalEarned, I(MedalEnum.Blud))];
+                __instance._medal.sprite = Medals[Math.Min(medalEarned, I(highestMedalOnLeaderboard))];
                 __instance._medal.gameObject.SetActive(true);
             }
             else if (medalEarned > (int)MedalEnum.Dev)
             {
                 __instance._medal.preserveAspect = true;
-                __instance._medal.sprite = Crystals[Math.Min(medalEarned, I(MedalEnum.Blud))];
+                __instance._medal.sprite = Crystals[Math.Min(medalEarned, I(highestMedalOnLeaderboard))];
                 __instance._medal.gameObject.SetActive(true);
             }
         }
