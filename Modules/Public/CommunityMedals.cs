@@ -53,6 +53,7 @@ namespace NeonLite.Modules
 
         private static Sprite[] imageCache = new Sprite[6];
         private static Sprite[] existingCache = new Sprite[6];
+        private static Dictionary<string, Sprite> embeddedImages = new Dictionary<string, Sprite>();
         private static string[] pastPaths = new string[6];
 
         public enum MedalEnum
@@ -368,6 +369,13 @@ namespace NeonLite.Modules
                     new Rect(0, 0, tex.width, tex.height),
                     new Vector2(0.5f, 0.5f)
                 );
+
+                if (imageCache[id] != null)
+                {
+                    UnityEngine.Object.Destroy(imageCache[id].texture);
+                    UnityEngine.Object.Destroy(imageCache[id]);
+                }
+
                 imageCache[id] = sprite;
                 pastPaths[id] = customPaths[id];
             }
@@ -376,12 +384,13 @@ namespace NeonLite.Modules
 
         private static Sprite LoadEmbeddedSprite(string resourceName, Sprite existing)
         {
-            var asm = Assembly.GetExecutingAssembly();
+            if (embeddedImages.TryGetValue(resourceName, out var cached) && cached != null)
+                return cached;
 
+            var asm = Assembly.GetExecutingAssembly();
             using Stream s = asm.GetManifestResourceStream(resourceName);
             if (s == null)
                 return null;
-
 
             byte[] bytes = new byte[s.Length];
             s.Read(bytes, 0, bytes.Length);
@@ -389,11 +398,14 @@ namespace NeonLite.Modules
             Texture2D tex = new Texture2D(2, 2);
             tex.LoadImage(bytes);
 
-            return Sprite.Create(
+            var sprite = Sprite.Create(
                 tex,
                 new Rect(0, 0, tex.width, tex.height),
                 existing.pivot
             );
+
+            embeddedImages[resourceName] = sprite;
+            return sprite;
         }
 
         static void AssetsDone(AssetBundle bundle)
