@@ -24,7 +24,7 @@ namespace NeonLite.Modules
         public static Dictionary<string, long[]> medalTimes = [];
 
         const string filename = "communitymedals.json";
-        const string URL = "https://raw.githubusercontent.com/DerelictJade/NeonLite/main/Resources/communitymedals.json";
+        const string URL = "https://raw.githubusercontent.com/Faustas156/NeonLite/main/Resources/communitymedals.json";
         
 
         // All stamps (null for bronze/silver/gold/ace)
@@ -47,10 +47,10 @@ namespace NeonLite.Modules
             new(1.0f, 0.333f, 0.988f) // BLOOD DIAMOND COLOR
         ];
 
-        private static Sprite[] imageCache = new Sprite[6];
-        private static Sprite[] existingCache = new Sprite[6];
+        private static Sprite[] imageCache = new Sprite[15];
+        private static Sprite[] existingCache = new Sprite[15];
         private static Dictionary<string, Sprite> embeddedImages = new Dictionary<string, Sprite>();
-        private static string[] pastPaths = new string[6];
+        private static string[] pastPaths = new string[15];
 
         public enum MedalEnum
         {
@@ -71,6 +71,24 @@ namespace NeonLite.Modules
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static int I(MedalEnum e) => (int)e;
 
+        public enum MedalImageEnum
+        {
+            MedalEm,
+            MedalAm,
+            MedalSph,
+            MikeyEm,
+            MikeyAm,
+            MikeySph,
+            CrystEm,
+            CrystAm,
+            CrystSph,
+            MedalTp,
+            MedalBd,
+            MikeyTp,
+            MikeyBd,
+            CrystTp,
+            CrystBd
+        }
 
         static bool assetReadyUnderlying;
         public static bool Ready
@@ -86,19 +104,34 @@ namespace NeonLite.Modules
         static bool fetched;
         static bool loaded;
 
+        static bool pastCustomStandardMedals;
+
         public static MelonPreferences_Entry<bool> setting;
         internal static MelonPreferences_Entry<bool> oldStyle;
         internal static MelonPreferences_Entry<bool> hideOld;
         internal static MelonPreferences_Entry<bool> hideLeaderboard;
         internal static MelonPreferences_Entry<bool> leaderboardSaphPlus;
+        internal static MelonPreferences_Entry<bool> customStandardMedals;
         public static MelonPreferences_Entry<float> hueShift;
         internal static MelonPreferences_Entry<string> overrideURL;
+        internal static MelonPreferences_Entry<Color32> emeraldColor;
+        internal static MelonPreferences_Entry<Color32> amethystColor;
+        internal static MelonPreferences_Entry<Color32> sapphireColor;
         internal static MelonPreferences_Entry<Color32> topazColor;
         internal static MelonPreferences_Entry<Color32> bdColor;
+        internal static MelonPreferences_Entry<string> emeraldImagePath;
+        internal static MelonPreferences_Entry<string> amethystImagePath;
+        internal static MelonPreferences_Entry<string> sapphireImagePath;
         internal static MelonPreferences_Entry<string> topazImagePath;
         internal static MelonPreferences_Entry<string> bdImagePath;
+        internal static MelonPreferences_Entry<string> emeraldStampPath;
+        internal static MelonPreferences_Entry<string> amethystStampPath;
+        internal static MelonPreferences_Entry<string> sapphireStampPath;
         internal static MelonPreferences_Entry<string> topazStampPath;
         internal static MelonPreferences_Entry<string> bdStampPath;
+        internal static MelonPreferences_Entry<string> emeraldCrystalPath;
+        internal static MelonPreferences_Entry<string> amethystCrystalPath;
+        internal static MelonPreferences_Entry<string> sapphireCrystalPath;
         internal static MelonPreferences_Entry<string> topazCrystalPath;
         internal static MelonPreferences_Entry<string> bdCrystalPath;
 
@@ -124,16 +157,32 @@ namespace NeonLite.Modules
             uploadGlobal = Settings.Add(Settings.h, "Medals", "uploadGlobal", "Upload to Global", "Whether to upload your medal data to global. This uploads all your level medals for other mods to potentially look at. Works with extended medals.", true);
             showGlobalMedals = Settings.Add(Settings.h, "Medals", "showGlobalMedals", "Global Medals to Display", "Which medals to show on the global leaderboard.", LBDisplay.Dev | LBDisplay.Emerald | LBDisplay.Amethyst | LBDisplay.Sapphire);
 #endif
-            leaderboardSaphPlus = Settings.Add(Settings.h, "Medals", "leadeerboardSaphPlus", "Show Saph+ on Leaderboard", "Show medals higher than Sapphire on leaderboards", true);
+            leaderboardSaphPlus = Settings.Add(Settings.h, "Medals", "leaderboardSaphPlus", "Show Saph+ on Leaderboard", "Show medals higher than Sapphire on leaderboards.", false);
+            customStandardMedals = Settings.Add(Settings.h, "Medals", "customStandardMedals", "Custom Standard Medal Images", "Use custom images for emerald, amethyst, and sapphire medals. Reload level to take effect.", false);
+
+            pastCustomStandardMedals = customStandardMedals.Value;
+
             overrideURL = Settings.Add(Settings.h, "Medals", "overrideURL", "Extension URL", "Specifies additional community medals JSON URL to apply on top of the existing community medals.", "");
+            emeraldColor = Settings.Add(Settings.h, "Medals", "emeraldColor", "Emerald Color", "Color for Emerald times.", new Color32(100, 204, 100, 255));
+            amethystColor = Settings.Add(Settings.h, "Medals", "amethystColor", "Amethyst Color", "Color for Amethyst times.", new Color32(172, 80, 233, 255));
+            sapphireColor = Settings.Add(Settings.h, "Medals", "sapphireColor", "Sapphire Color", "Color for Sapphire times.", new Color32(11, 81, 230, 255));
             topazColor = Settings.Add(Settings.h, "Medals", "topazColor", "Topaz Color", "Color for Topaz times.", new Color32(249, 87, 0, 255));
             bdColor = Settings.Add(Settings.h, "Medals", "bdColor", "Blood Diamond Color", "Color for Blood Diamond times.", new Color32(187, 10, 30, 255));
-            topazImagePath = Settings.Add(Settings.h, "Medals", "topazImagePath", "Custom Topaz Medal Image", "Set a custom topaz medal image by entering the path to a local image.\nMake sure to remove quotes!", "");
-            bdImagePath = Settings.Add(Settings.h, "Medals", "bdImagePath", "Custom Blood Diamond Medal Image", "Set a custom blood diamond medal image by entering the path to a local image.\nMake sure to remove quotes!", "");
-            topazStampPath = Settings.Add(Settings.h, "Medals", "topazStampPath", "Custom Topaz Stamp Image", "Set a custom topaz stamp image by entering the path to a local image.\nMake sure to remove quotes!", "");
-            bdStampPath = Settings.Add(Settings.h, "Medals", "bdStampPath", "Custom Blood Diamond Stamp Image", "Set a custom blood diamond stamp image by entering the path to a local image.\nMake sure to remove quotes!", "");
-            topazCrystalPath = Settings.Add(Settings.h, "Medals", "topazCrystalPath", "Custom Topaz Crystal Image", "Set a custom topaz crystal image by entering the path to a local image.\nMake sure to remove quotes!", "");
-            bdCrystalPath = Settings.Add(Settings.h, "Medals", "bdCrystalPath", "Custom Blood Diamond Crystal Image", "Set a custom blood diamond crystal image by entering the path to a local image.\nMake sure to remove quotes!", "");
+            emeraldImagePath = Settings.Add(Settings.h, "Medals", "emeraldImagePath", "Custom Emerald Medal Image", "Set a custom emerald medal image by entering the path to a local image. Reload level to take effect.", "");
+            amethystImagePath = Settings.Add(Settings.h, "Medals", "amethystImagePath", "Custom Amethyst Medal Image", "Set a custom amethyst medal image by entering the path to a local image. Reload level to take effect.", "");
+            sapphireImagePath = Settings.Add(Settings.h, "Medals", "sapphireImagePath", "Custom Sapphire Medal Image", "Set a custom sapphire medal image by entering the path to a local image. Reload level to take effect.", "");
+            topazImagePath = Settings.Add(Settings.h, "Medals", "topazImagePath", "Custom Topaz Medal Image", "Set a custom topaz medal image by entering the path to a local image. Reload level to take effect.", "");
+            bdImagePath = Settings.Add(Settings.h, "Medals", "bdImagePath", "Custom Blood Diamond Medal Image", "Set a custom blood diamond medal image by entering the path to a local image. Reload level to take effect.", "");
+            emeraldStampPath = Settings.Add(Settings.h, "Medals", "emeraldStampPath", "Custom Emerald Stamp Image", "Set a custom emerald stamp image by entering the path to a local image. Reload level to take effect.", "");
+            amethystStampPath = Settings.Add(Settings.h, "Medals", "amethystStampPath", "Custom Amethyst Stamp Image", "Set a custom amethyst stamp image by entering the path to a local image. Reload level to take effect.", "");
+            sapphireStampPath = Settings.Add(Settings.h, "Medals", "sapphireStampPath", "Custom Sapphire Stamp Image", "Set a custom apphire stamp image by entering the path to a local image. Reload level to take effect.", "");
+            topazStampPath = Settings.Add(Settings.h, "Medals", "topazStampPath", "Custom Topaz Stamp Image", "Set a custom topaz stamp image by entering the path to a local image. Reload level to take effect.", "");
+            bdStampPath = Settings.Add(Settings.h, "Medals", "bdStampPath", "Custom Blood Diamond Stamp Image", "Set a custom blood diamond stamp image by entering the path to a local image. Reload level to take effect.", "");
+            emeraldCrystalPath = Settings.Add(Settings.h, "Medals", "emeraldCrystalPath", "Custom Emerald Crystal Image", "Set a custom emerald crystal image by entering the path to a local image. Reload level to take effect.", "");
+            amethystCrystalPath = Settings.Add(Settings.h, "Medals", "amethystCrystalPath", "Custom Amethyst Crystal Image", "Set a custom amethyst crystal image by entering the path to a local image. Reload level to take effect.", "");
+            sapphireCrystalPath = Settings.Add(Settings.h, "Medals", "sapphireCrystalPath", "Custom Sapphire Crystal Image", "Set a custom sapphire crystal image by entering the path to a local image. Reload level to take effect.", "");
+            topazCrystalPath = Settings.Add(Settings.h, "Medals", "topazCrystalPath", "Custom Topaz Crystal Image", "Set a custom topaz crystal image by entering the path to a local image. Reload level to take effect.", "");
+            bdCrystalPath = Settings.Add(Settings.h, "Medals", "bdCrystalPath", "Custom Blood Diamond Crystal Image", "Set a custom blood diamond crystal image by entering the path to a local image. Reload level to take effect.", "");
 
             active = setting.SetupForModule(Activate, static (_, after) => after);
             hueShift.OnEntryValueChanged.Subscribe(static (_, after) => HueShiftMat?.SetFloat("_Shift", after));
@@ -289,26 +338,43 @@ namespace NeonLite.Modules
             if (loaded)
                 AssetsDone(NeonLite.bundle);
 
-            UpdateMedals();
+            UpdateMedals(NeonLite.bundle);
         }
 
-        static void UpdateMedals()
+        static void UpdateMedals(AssetBundle bundle)
         {
+            Colors[5] = emeraldColor.Value;
+            Colors[6] = amethystColor.Value;
+            Colors[7] = sapphireColor.Value;
             Colors[8] = topazColor.Value;
             Colors[9] = bdColor.Value;
 
-            for (int i = 0; i < 6; i++)
+            for (int i = 9; i < 15; i++)
             {
                 if (existingCache[i] == null)
                     return;
             }
 
-            Medals[8] = LoadSprite(0, existingCache[0]);
-            Medals[9] = LoadSprite(1, existingCache[1]);
-            Stamps[8] = LoadSprite(2, existingCache[2]);
-            Stamps[9] = LoadSprite(3, existingCache[3]);
-            Crystals[8] = LoadSprite(4, existingCache[4]);
-            Crystals[9] = LoadSprite(5, existingCache[5]);
+            if (customStandardMedals.Value || !customStandardMedals.Value && pastCustomStandardMedals)
+            {
+                Medals[5] = LoadSprite((int)MedalImageEnum.MedalEm, null, bundle);
+                Medals[6] = LoadSprite((int)MedalImageEnum.MedalAm, null, bundle);
+                Medals[7] = LoadSprite((int)MedalImageEnum.MedalSph, null, bundle);
+                Stamps[5] = LoadSprite((int)MedalImageEnum.MikeyEm, null, bundle);
+                Stamps[6] = LoadSprite((int)MedalImageEnum.MikeyAm, null, bundle);
+                Stamps[7] = LoadSprite((int)MedalImageEnum.MikeySph, null, bundle);
+                Crystals[5] = LoadSprite((int)MedalImageEnum.CrystEm, null, bundle);
+                Crystals[6] = LoadSprite((int)MedalImageEnum.CrystAm, null, bundle);
+                Crystals[7] = LoadSprite((int)MedalImageEnum.CrystSph, null, bundle);
+                pastCustomStandardMedals = customStandardMedals.Value;
+            }
+
+            Medals[8] = LoadSprite((int)MedalImageEnum.MedalTp, existingCache[(int)MedalImageEnum.MedalTp], null);
+            Medals[9] = LoadSprite((int)MedalImageEnum.MedalBd, existingCache[(int)MedalImageEnum.MedalBd], null);
+            Stamps[8] = LoadSprite((int)MedalImageEnum.MikeyTp, existingCache[(int)MedalImageEnum.MikeyTp], null);
+            Stamps[9] = LoadSprite((int)MedalImageEnum.MikeyBd, existingCache[(int)MedalImageEnum.MikeyBd], null);
+            Crystals[8] = LoadSprite((int)MedalImageEnum.CrystTp, existingCache[(int)MedalImageEnum.CrystTp], null);
+            Crystals[9] = LoadSprite((int)MedalImageEnum.CrystBd, existingCache[(int)MedalImageEnum.CrystBd], null);
         }
 
         static void Activate(bool activate)
@@ -345,10 +411,19 @@ namespace NeonLite.Modules
                 graphic.material = HueShiftMat;
         }
 
-        private static Sprite LoadSprite(int id, Sprite existing)
+        private static Sprite LoadSprite(int id, Sprite existing, AssetBundle bundle)
         {
             string[] paths =
             {
+                "Assets/Sprites/MedalEmerald.png",
+                "Assets/Sprites/MedalAmethyst.png",
+                "Assets/Sprites/MedalSapphire.png",
+                "Assets/Sprites/MikeyEmerald.png",
+                "Assets/Sprites/MikeyAmethyst.png",
+                "Assets/Sprites/MikeySapphire.png",
+                "Assets/Sprites/CrystalEmerald.png",
+                "Assets/Sprites/CrystalAmethyst.png",
+                "Assets/Sprites/CrystalSapphire.png",
                 "NeonLite.Assets.Sprites.MedalTopaz.png",
                 "NeonLite.Assets.Sprites.MedalBlud.png",
                 "NeonLite.Assets.Sprites.MikeyTopaz.png",
@@ -358,6 +433,15 @@ namespace NeonLite.Modules
             };
             string[] customPaths =
             {
+                emeraldImagePath.Value,
+                amethystImagePath.Value,
+                sapphireImagePath.Value,
+                emeraldStampPath.Value,
+                amethystStampPath.Value,
+                sapphireStampPath.Value,
+                emeraldCrystalPath.Value,
+                amethystCrystalPath.Value,
+                sapphireCrystalPath.Value,
                 topazImagePath.Value,
                 bdImagePath.Value,
                 topazStampPath.Value,
@@ -366,7 +450,12 @@ namespace NeonLite.Modules
                 bdCrystalPath.Value,
             };
 
-            if (customPaths[id] == "" || !File.Exists(customPaths[id])) return LoadEmbeddedSprite(paths[id], existing);
+            if (!customStandardMedals.Value && id < 9) return bundle.LoadAsset<Sprite>(paths[id]);
+
+            if (customPaths[id] == "" || !File.Exists(customPaths[id])) {
+                if (id >= 9) return LoadEmbeddedSprite(paths[id], existing);
+                if (id < 9) return bundle.LoadAsset<Sprite>(paths[id]);
+            }
 
             if (imageCache[id] == null || customPaths[id] != pastPaths[id])
             {
@@ -435,16 +524,16 @@ namespace NeonLite.Modules
                 gamedata.medalSprite_Gold,
                 gamedata.medalSprite_Ace,
                 gamedata.medalSprite_Dev,
-                bundle.LoadAsset<Sprite>("Assets/Sprites/MedalEmerald.png"),
-                bundle.LoadAsset<Sprite>("Assets/Sprites/MedalAmethyst.png"),
-                bundle.LoadAsset<Sprite>("Assets/Sprites/MedalSapphire.png"),
-                LoadSprite(0, gamedata.medalSprite_Bronze),
-                LoadSprite(1, gamedata.medalSprite_Bronze),
+                LoadSprite((int)MedalImageEnum.MedalEm, null, bundle),
+                LoadSprite((int)MedalImageEnum.MedalAm, null, bundle),
+                LoadSprite((int)MedalImageEnum.MedalSph, null, bundle),
+                LoadSprite((int)MedalImageEnum.MedalTp, gamedata.medalSprite_Bronze, null),
+                LoadSprite((int)MedalImageEnum.MedalBd, gamedata.medalSprite_Bronze, null),
 
             ];
 
-            existingCache[0] = gamedata.medalSprite_Bronze;
-            existingCache[1] = gamedata.medalSprite_Bronze;
+            existingCache[(int)MedalImageEnum.MedalTp] = gamedata.medalSprite_Bronze;
+            existingCache[(int)MedalImageEnum.MedalBd] = gamedata.medalSprite_Bronze;
 
             var levelInfo = ((MenuScreenStaging)MainMenu.Instance()._screenStaging)
                     ._leaderboardsAndLevelInfoRef
@@ -458,15 +547,15 @@ namespace NeonLite.Modules
                 null,
                 null,
                 devStamp,
-                bundle.LoadAsset<Sprite>("Assets/Sprites/MikeyEmerald.png"),
-                bundle.LoadAsset<Sprite>("Assets/Sprites/MikeyAmethyst.png"),
-                bundle.LoadAsset<Sprite>("Assets/Sprites/MikeySapphire.png"),
-                LoadSprite(2, devStamp),
-                LoadSprite(3, devStamp),
+                LoadSprite((int)MedalImageEnum.MikeyEm, null, bundle),
+                LoadSprite((int)MedalImageEnum.MikeyAm, null, bundle),
+                LoadSprite((int)MedalImageEnum.MikeySph, null, bundle),
+                LoadSprite((int)MedalImageEnum.MikeyTp, devStamp, null),
+                LoadSprite((int)MedalImageEnum.MikeyBd, devStamp, null),
             ];
 
-            existingCache[2] = devStamp;
-            existingCache[3] = devStamp;
+            existingCache[(int)MedalImageEnum.MikeyTp] = devStamp;
+            existingCache[(int)MedalImageEnum.MikeyBd] = devStamp;
 
             Crystals = [
                 levelInfo._crystalSpriteSidequestEmpty,
@@ -474,15 +563,15 @@ namespace NeonLite.Modules
                 levelInfo._crystalSpriteSidequestFilled,
                 levelInfo._crystalSpriteSidequestFilled,
                 levelInfo._crystalSpriteSidequestFilled,
-                bundle.LoadAsset<Sprite>("Assets/Sprites/CrystalEmerald.png"),
-                bundle.LoadAsset<Sprite>("Assets/Sprites/CrystalAmethyst.png"),
-                bundle.LoadAsset<Sprite>("Assets/Sprites/CrystalSapphire.png"),
-                LoadSprite(4, levelInfo._crystalSpriteSidequestFilled),
-                LoadSprite(5, levelInfo._crystalSpriteSidequestFilled),
+                LoadSprite((int)MedalImageEnum.CrystEm, null, bundle),
+                LoadSprite((int)MedalImageEnum.CrystAm, null, bundle),
+                LoadSprite((int)MedalImageEnum.CrystSph, null, bundle),
+                LoadSprite((int)MedalImageEnum.CrystTp, levelInfo._crystalSpriteSidequestFilled, null),
+                LoadSprite((int)MedalImageEnum.CrystBd, levelInfo._crystalSpriteSidequestFilled, null),
             ];
 
-            existingCache[4] = levelInfo._crystalSpriteSidequestFilled;
-            existingCache[5] = levelInfo._crystalSpriteSidequestFilled;
+            existingCache[(int)MedalImageEnum.CrystTp] = levelInfo._crystalSpriteSidequestFilled;
+            existingCache[(int)MedalImageEnum.CrystBd] = levelInfo._crystalSpriteSidequestFilled;
 
             HueShiftMat = bundle.LoadAsset<Material>("Assets/Material/HueShift.mat");
             HueShiftMat.SetFloat("_Shift", hueShift.Value);
