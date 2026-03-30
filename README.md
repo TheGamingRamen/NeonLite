@@ -1,7 +1,7 @@
 # NeonLite
  The Quality of Life Mod for All Your Neon White needs!
 
- Approved for usage in Speedrunning. 
+ !! This is an unofficial build; use at you own risk! !!
 
 ## Current Mods
 
